@@ -18,7 +18,7 @@ pub struct Tree<K: Ord, V> {
 
 impl<K: Ord, V> Tree<K, V> {
     #[inline]
-    fn new(value: V) -> Tree<K, V> {
+    pub fn new(value: V) -> Tree<K, V> {
         Tree {
             value,
             children: BTreeMap::new(),
