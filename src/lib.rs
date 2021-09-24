@@ -1,6 +1,8 @@
 use std::{
     borrow::Borrow,
-    collections::hash_map::{self, HashMap, IntoKeys, IntoValues, Keys, Values, ValuesMut},
+    collections::hash_map::{
+        self, HashMap, IntoKeys, IntoValues, Keys, Values, ValuesMut,
+    },
     hash::Hash,
 };
 
@@ -78,7 +80,9 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     #[inline]
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
         match self.children.entry(key) {
-            hash_map::Entry::Occupied(entry) => Entry::Occupied(OccupiedEntry(entry)),
+            hash_map::Entry::Occupied(entry) => {
+                Entry::Occupied(OccupiedEntry(entry))
+            }
             hash_map::Entry::Vacant(entry) => Entry::Vacant(VacantEntry(entry)),
         }
     }
@@ -176,7 +180,10 @@ impl<'a, K: Hash + Eq, V> Entry<'a, K, V> {
     }
 
     #[inline]
-    pub fn or_insert_with<F: FnOnce() -> V>(self, default: F) -> &'a mut Tree<K, V> {
+    pub fn or_insert_with<F: FnOnce() -> V>(
+        self,
+        default: F,
+    ) -> &'a mut Tree<K, V> {
         match self {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(default()),
@@ -184,7 +191,10 @@ impl<'a, K: Hash + Eq, V> Entry<'a, K, V> {
     }
 
     #[inline]
-    pub fn or_insert_with_key<F: FnOnce(&K) -> V>(self, default: F) -> &'a mut Tree<K, V> {
+    pub fn or_insert_with_key<F: FnOnce(&K) -> V>(
+        self,
+        default: F,
+    ) -> &'a mut Tree<K, V> {
         match self {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
@@ -217,7 +227,9 @@ impl<'a, K: Hash + Eq, V> Entry<'a, K, V> {
     }
 }
 
-pub struct OccupiedEntry<'a, K: Hash + Eq, V>(hash_map::OccupiedEntry<'a, K, Tree<K, V>>);
+pub struct OccupiedEntry<'a, K: Hash + Eq, V>(
+    hash_map::OccupiedEntry<'a, K, Tree<K, V>>,
+);
 
 impl<'a, K: Hash + Eq, V> OccupiedEntry<'a, K, V> {
     #[inline]
@@ -256,7 +268,9 @@ impl<'a, K: Hash + Eq, V> OccupiedEntry<'a, K, V> {
     }
 }
 
-pub struct VacantEntry<'a, K: 'a + Hash + Eq, V: 'a>(hash_map::VacantEntry<'a, K, Tree<K, V>>);
+pub struct VacantEntry<'a, K: 'a + Hash + Eq, V: 'a>(
+    hash_map::VacantEntry<'a, K, Tree<K, V>>,
+);
 
 impl<'a, K: 'a + Hash + Eq, V: 'a> VacantEntry<'a, K, V> {
     #[inline]
