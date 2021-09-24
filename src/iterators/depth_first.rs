@@ -164,3 +164,84 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIterMut<'a, K, V> {
         };
     }
 }
+
+#[cfg(test)]
+use duplicate::duplicate;
+
+#[cfg(test)]
+#[duplicate(
+    tests        iter_depth_first        ;
+    [tests]      [iter_depth_first]      ;
+    [tests_mut]  [iter_depth_first_mut]  ;
+)]
+#[allow(unused_mut)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn go_down_one_level_should_succeed() {
+        // -------------------- SETUP --------------------
+        let mut subject = TestSubject::new(Thing(0));
+        let child = subject.entry(1).or_insert(Thing(1));
+        child.add_child(2, Thing(2));
+        let mut iter = subject.iter_depth_first();
+        let stack_len = iter.stack.len();
+
+        // ------------------ EXERCISE ------------------
+        let result = iter.go_down_one_level();
+
+        // ------------------- ASSERT -------------------
+        result.unwrap();
+        assert_eq!(iter.stack.len(), stack_len + 1);
+        assert!(iter.current.is_some());
+    }
+
+    #[test]
+    fn go_down_one_level_should_fail() {
+        // -------------------- SETUP --------------------
+        let mut subject = TestSubject::new(Thing(0));
+        let mut iter = subject.iter_depth_first();
+
+        // ------------------ EXERCISE ------------------
+        let result = iter.go_down_one_level();
+
+        // ------------------- ASSERT -------------------
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn go_up_one_level_should_succeed() {
+        // -------------------- SETUP --------------------
+        let mut subject = TestSubject::new(Thing(0));
+        let child = subject.entry(1).or_insert(Thing(1));
+        child.add_child(2, Thing(2));
+        let mut iter = subject.iter_depth_first();
+        iter.go_down_one_level().expect("test setup failed");
+        let stack_len = iter.stack.len();
+
+        // ------------------ EXERCISE ------------------
+        let result = iter.go_up_one_level();
+
+        // ------------------- ASSERT -------------------
+        result.unwrap();
+        assert_eq!(iter.stack.len(), stack_len - 1);
+    }
+
+    #[test]
+    fn go_up_one_level_should_fail() {
+        // -------------------- SETUP --------------------
+        let mut subject = TestSubject::new(Thing(0));
+        let mut iter = subject.iter_depth_first();
+
+        // ------------------ EXERCISE ------------------
+        let result = iter.go_up_one_level();
+
+        // ------------------- ASSERT -------------------
+        assert!(result.is_err());
+    }
+
+    type TestSubject = Tree<usize, Thing>;
+
+    #[derive(Eq, PartialEq, Default, Debug)]
+    struct Thing(usize);
+}

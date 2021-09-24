@@ -6,4 +6,6 @@ edition = "2018"
 description = "A tree-like data structure where the values are tagged."
 license = "MIT"
 
-[dependencies]
+[dev-dependencies]
+duplicate = "0.3.0"
+mockall = "0.10.2"
