@@ -11,9 +11,7 @@ impl<'a, K: Ord + 'a, V: 'a> Iterator for DepthFirstIter<'a, K, V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_value = self.current.map(|(key, tree)| (key, &tree.value));
-        if self.go_down_one_level().is_err() {
-            self.go_up_and_down().ok();
-        }
+        self.advance_to_next_node();
         next_value
     }
 }
@@ -22,9 +20,29 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIter<'a, K, V> {
     #[inline]
     pub(crate) fn new(tree: &'a Tree<K, V>) -> Self {
         let mut iter = tree.iter_single();
-        Self {
-            current: iter.next(),
-            stack: vec![iter],
+        match iter.next() {
+            Some(value) => Self {
+                stack: vec![iter],
+                current: Some(value),
+            },
+            None => Self {
+                stack: Vec::new(),
+                current: None,
+            },
+        }
+    }
+
+    fn advance_to_next_node(&mut self) {
+        loop {
+            if self.go_down_one_level().is_ok() {
+                break;
+            }
+            if self.go_to_next_sibling().is_ok() {
+                break;
+            }
+            if self.go_up_one_level().is_err() {
+                break;
+            }
         }
     }
 
@@ -35,37 +53,36 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIter<'a, K, V> {
             Some((_, tree)) => {
                 let mut next_iter = tree.iter_single();
                 self.current = next_iter.next();
+                if self.current.is_none() {
+                    return Err(());
+                }
                 self.stack.push(next_iter);
                 Ok(())
             }
         }
     }
 
-    /// Walks up the stack one level at a time, trying to go down again at each level.
-    /// If it reaches the top without being able to go down, returns an error
-    fn go_up_and_down(&mut self) -> Result<(), ()> {
-        loop {
-            if self.go_up_one_level().is_err() {
-                return Err(());
-            }
-            if self.go_down_one_level().is_ok() {
-                return Ok(());
+    /// Tries to advance to the next sibling, returns an error if there are no more
+    /// siblings
+    fn go_to_next_sibling(&mut self) -> Result<(), ()> {
+        match self.stack.last_mut() {
+            None => Err(()),
+            Some(iter) => {
+                self.current = iter.next();
+                match &self.current {
+                    None => Err(()),
+                    Some(_) => Ok(()),
+                }
             }
         }
     }
 
     /// Tries to walk one level back up the stack, returns an error if already at the top
     fn go_up_one_level(&mut self) -> Result<(), ()> {
-        // try to pop
-        if self.stack.pop().is_none() {
-            return Err(());
+        match self.stack.pop() {
+            Some(_) => Ok(()),
+            None => Err(()),
         }
-
-        // set the state for the next call
-        if let Some(next_iter) = self.stack.last_mut() {
-            self.current = next_iter.next();
-        }
-        Ok(())
     }
 }
 
@@ -80,9 +97,7 @@ impl<'a, K: Ord + 'a, V: 'a> Iterator for DepthFirstIterMut<'a, K, V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_value = self.current.take();
-        if self.go_down_one_level().is_err() {
-            self.go_up_and_down().ok();
-        }
+        self.advance_to_next_node();
         next_value
     }
 }
@@ -92,15 +107,32 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIterMut<'a, K, V> {
     pub(crate) fn new(tree: &'a mut Tree<K, V>) -> Self {
         let mut iter = tree.iter_single_mut();
 
-        let mut obj = Self {
-            current: None,
-            children: None,
-            stack: Vec::new(),
-        };
-        obj.update(iter.next());
-        obj.stack.push(iter);
+        match iter.next() {
+            Some((key, tree)) => Self {
+                stack: vec![iter],
+                current: Some((key, &mut tree.value)),
+                children: Some(&mut tree.children),
+            },
+            None => Self {
+                stack: Vec::new(),
+                current: None,
+                children: None,
+            },
+        }
+    }
 
-        obj
+    fn advance_to_next_node(&mut self) {
+        loop {
+            if self.go_down_one_level().is_ok() {
+                break;
+            }
+            if self.go_to_next_sibling().is_ok() {
+                break;
+            }
+            if self.go_up_one_level().is_err() {
+                break;
+            }
+        }
     }
 
     /// Tries to traverse down one level, returns an error if already at the bottom
@@ -113,41 +145,40 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIterMut<'a, K, V> {
                     (*p).iter_mut()
                 };
                 self.update(next_iter.next());
+                if self.current.is_none() {
+                    return Err(());
+                }
                 self.stack.push(next_iter);
-                self.children = Some(children);
                 Ok(())
             }
         }
     }
 
-    /// Walks up the stack one level at a time, trying to go down again at each level.
-    /// If it reaches the top without being able to go down, returns an error
-    fn go_up_and_down(&mut self) -> Result<(), ()> {
-        loop {
-            if self.go_up_one_level().is_err() {
-                return Err(());
-            }
-            if self.go_down_one_level().is_ok() {
-                return Ok(());
+    /// Tries to advance to the next sibling, returns an error if there are no more
+    /// siblings
+    fn go_to_next_sibling(&mut self) -> Result<(), ()> {
+        let iter = unsafe {
+            let p: *mut Self = self;
+            (*p).stack.last_mut()
+        };
+        match iter {
+            None => Err(()),
+            Some(iter) => {
+                self.update(iter.next());
+                match &self.current {
+                    None => Err(()),
+                    Some(_) => Ok(()),
+                }
             }
         }
     }
 
     /// Tries to walk one level back up the stack, returns an error if already at the top
     fn go_up_one_level(&mut self) -> Result<(), ()> {
-        // try to pop
-        if self.stack.pop().is_none() {
-            return Err(());
+        match self.stack.pop() {
+            Some(_) => Ok(()),
+            None => Err(()),
         }
-
-        // set the state for the next call
-        unsafe {
-            let p: *mut Self = self;
-            if let Some(next_iter) = (*p).stack.last_mut() {
-                self.update(next_iter.next());
-            }
-        }
-        Ok(())
     }
 
     /// Updates the current state from the result of the backing iterator
