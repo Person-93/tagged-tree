@@ -1,5 +1,5 @@
 [package]
-name = "tagged-hash-tree"
+name = "tagged-tree"
 authors = ["person93 <person93.person93@gmail.com>"]
 version = "0.1.0-dev"
 edition = "2018"

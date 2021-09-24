@@ -1,24 +1,23 @@
 use std::{
     borrow::Borrow,
-    collections::hash_map::{
-        self, HashMap, IntoKeys, IntoValues, Keys, Values, ValuesMut,
+    collections::btree_map::{
+        self, BTreeMap, IntoKeys, IntoValues, Keys, Values, ValuesMut,
     },
-    hash::Hash,
 };
 
 // TODO standard trait implementations
 
-pub struct Tree<K: Hash + Eq, V> {
+pub struct Tree<K: Ord, V> {
     value: V,
-    children: HashMap<K, Tree<K, V>>,
+    children: BTreeMap<K, Tree<K, V>>,
 }
 
-impl<K: Hash + Eq, V> Tree<K, V> {
+impl<K: Ord, V> Tree<K, V> {
     #[inline]
     fn new(value: V) -> Tree<K, V> {
         Tree {
             value,
-            children: HashMap::new(),
+            children: BTreeMap::new(),
         }
     }
 
@@ -44,14 +43,14 @@ impl<K: Hash + Eq, V> Tree<K, V> {
 
     /// An iterator visiting the children without nesting
     #[inline]
-    pub fn iter_single(&self) -> hash_map::Iter<K, Self> {
+    pub fn iter_single(&self) -> btree_map::Iter<K, Self> {
         self.children.iter()
     }
 
     /// An iterator visiting the children without nesting and returning mutable
     /// references
     #[inline]
-    pub fn iter_single_mut(&mut self) -> hash_map::IterMut<K, Self> {
+    pub fn iter_single_mut(&mut self) -> btree_map::IterMut<K, Self> {
         self.children.iter_mut()
     }
 
@@ -68,11 +67,6 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     }
 
     #[inline]
-    pub fn drain(&mut self) -> hash_map::Drain<'_, K, Self> {
-        self.children.drain()
-    }
-
-    #[inline]
     pub fn clear(&mut self) {
         self.children.clear()
     }
@@ -80,10 +74,12 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     #[inline]
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
         match self.children.entry(key) {
-            hash_map::Entry::Occupied(entry) => {
+            btree_map::Entry::Occupied(entry) => {
                 Entry::Occupied(OccupiedEntry(entry))
             }
-            hash_map::Entry::Vacant(entry) => Entry::Vacant(VacantEntry(entry)),
+            btree_map::Entry::Vacant(entry) => {
+                Entry::Vacant(VacantEntry(entry))
+            }
         }
     }
 
@@ -91,7 +87,7 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     pub fn get_child<Q: ?Sized>(&self, key: &Q) -> Option<&Self>
     where
         K: Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord,
     {
         self.children.get(key)
     }
@@ -100,7 +96,7 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     pub fn get_key_value<Q: ?Sized>(&self, key: &Q) -> Option<(&K, &Self)>
     where
         K: Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord,
     {
         self.children.get_key_value(key)
     }
@@ -109,7 +105,7 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord,
     {
         self.children.contains_key(key)
     }
@@ -118,7 +114,7 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     pub fn get_child_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut Self>
     where
         K: Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord,
     {
         self.children.get_mut(key)
     }
@@ -132,7 +128,7 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<Self>
     where
         K: Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord,
     {
         self.children.remove(key)
     }
@@ -141,7 +137,7 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     pub fn remove_entry<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, Self)>
     where
         K: Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord,
     {
         self.children.remove_entry(key)
     }
@@ -165,12 +161,12 @@ impl<K: Hash + Eq, V> Tree<K, V> {
     }
 }
 
-pub enum Entry<'a, K: Hash + Eq, V> {
+pub enum Entry<'a, K: Ord, V> {
     Occupied(OccupiedEntry<'a, K, V>),
     Vacant(VacantEntry<'a, K, V>),
 }
 
-impl<'a, K: Hash + Eq, V> Entry<'a, K, V> {
+impl<'a, K: Ord, V> Entry<'a, K, V> {
     #[inline]
     pub fn or_insert(self, default: V) -> &'a mut Tree<K, V> {
         match self {
@@ -227,11 +223,11 @@ impl<'a, K: Hash + Eq, V> Entry<'a, K, V> {
     }
 }
 
-pub struct OccupiedEntry<'a, K: Hash + Eq, V>(
-    hash_map::OccupiedEntry<'a, K, Tree<K, V>>,
+pub struct OccupiedEntry<'a, K: Ord, V>(
+    btree_map::OccupiedEntry<'a, K, Tree<K, V>>,
 );
 
-impl<'a, K: Hash + Eq, V> OccupiedEntry<'a, K, V> {
+impl<'a, K: Ord, V> OccupiedEntry<'a, K, V> {
     #[inline]
     pub fn key(&self) -> &K {
         self.0.key()
@@ -268,11 +264,11 @@ impl<'a, K: Hash + Eq, V> OccupiedEntry<'a, K, V> {
     }
 }
 
-pub struct VacantEntry<'a, K: 'a + Hash + Eq, V: 'a>(
-    hash_map::VacantEntry<'a, K, Tree<K, V>>,
+pub struct VacantEntry<'a, K: 'a + Ord, V: 'a>(
+    btree_map::VacantEntry<'a, K, Tree<K, V>>,
 );
 
-impl<'a, K: 'a + Hash + Eq, V: 'a> VacantEntry<'a, K, V> {
+impl<'a, K: 'a + Ord, V: 'a> VacantEntry<'a, K, V> {
     #[inline]
     pub fn key(&self) -> &K {
         self.0.key()
