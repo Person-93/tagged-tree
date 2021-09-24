@@ -1,0 +1,9 @@
+[package]
+name = "tagged-hash-tree"
+authors = ["person93 <person93.person93@gmail.com>"]
+version = "0.1.0-dev"
+edition = "2018"
+description = "A tree-like data structure where the values are tagged."
+license = "MIT"
+
+[dependencies]
