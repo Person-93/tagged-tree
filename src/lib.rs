@@ -335,3 +335,6 @@ impl<'a, K: 'a + Ord, V: 'a> VacantEntry<'a, K, V> {
         self.0.insert(Tree::new(value))
     }
 }
+
+#[cfg(doctest)]
+doc_comment::doctest!("../README.md");
