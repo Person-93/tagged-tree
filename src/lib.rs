@@ -31,6 +31,12 @@ impl<K: Ord, V> Tree<K, V> {
     }
 
     #[inline]
+    pub fn set_value(&mut self, mut value: V) -> V {
+        std::mem::swap(&mut self.value, &mut value);
+        value
+    }
+
+    #[inline]
     pub fn children_keys(&self) -> Keys<'_, K, Self> {
         self.children.keys()
     }
