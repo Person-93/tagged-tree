@@ -142,8 +142,19 @@ impl<K: Ord, V> Tree<K, V> {
     }
 
     #[inline]
-    pub fn add_child(&mut self, key: K, value: V) -> Option<Self> {
-        self.children.insert(key, Tree::new(value))
+    pub fn add_child(
+        &mut self,
+        key: K,
+        mut value: V,
+    ) -> (Option<V>, &mut Self) {
+        match self.entry(key) {
+            Entry::Occupied(entry) => {
+                let child = entry.into_mut();
+                std::mem::swap(&mut value, &mut child.value);
+                (Some(value), child)
+            }
+            Entry::Vacant(entry) => (None, entry.insert(value)),
+        }
     }
 
     #[inline]
@@ -291,8 +302,10 @@ impl<'a, K: Ord, V> OccupiedEntry<'a, K, V> {
     }
 
     #[inline]
-    pub fn insert(&mut self, value: V) -> Tree<K, V> {
-        self.0.insert(Tree::new(value))
+    pub fn insert(&mut self, mut value: V) -> (V, &mut Tree<K, V>) {
+        let child = self.get_mut();
+        std::mem::swap(&mut value, &mut child.value);
+        (value, child)
     }
 
     #[inline]
