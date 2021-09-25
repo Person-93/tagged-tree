@@ -68,7 +68,15 @@ impl<K: Ord, V> Tree<K, V> {
         DepthFirstIterMut::new(self)
     }
 
-    // TODO breadth first traversal for regular and mut
+    #[inline]
+    pub fn iter_breadth_first(&self) -> BreadthFirstIter<K, V> {
+        BreadthFirstIter::new(self)
+    }
+
+    #[inline]
+    pub fn iter_breadth_first_mut(&mut self) -> BreadthFirstIterMut<K, V> {
+        BreadthFirstIterMut::new(self)
+    }
 
     #[inline]
     pub fn child_count(&mut self) -> usize {
