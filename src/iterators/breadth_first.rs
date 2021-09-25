@@ -1,6 +1,10 @@
 use crate::Tree;
-use std::collections::{btree_map, VecDeque};
+use std::{
+    collections::{btree_map, VecDeque},
+    iter::FusedIterator,
+};
 
+#[derive(Clone, Debug)]
 pub struct BreadthFirstIter<'a, K: Ord + 'a, V: 'a> {
     queue: VecDeque<btree_map::Iter<'a, K, Tree<K, V>>>,
     current: btree_map::Iter<'a, K, Tree<K, V>>,
@@ -31,6 +35,9 @@ impl<'a, K: Ord + 'a, V: 'a> Iterator for BreadthFirstIter<'a, K, V> {
     }
 }
 
+impl<K: Ord, V> FusedIterator for BreadthFirstIter<'_, K, V> {}
+
+#[derive(Debug)]
 pub struct BreadthFirstIterMut<'a, K: Ord + 'a, V: 'a> {
     queue: VecDeque<btree_map::IterMut<'a, K, Tree<K, V>>>,
     current: btree_map::IterMut<'a, K, Tree<K, V>>,
@@ -79,3 +86,5 @@ impl<'a, K: Ord + 'a, V: 'a> BreadthFirstIterMut<'a, K, V> {
         }
     }
 }
+
+impl<K: Ord, V> FusedIterator for BreadthFirstIterMut<'_, K, V> {}

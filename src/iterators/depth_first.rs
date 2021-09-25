@@ -1,6 +1,10 @@
 use crate::Tree;
-use std::collections::btree_map::{self, BTreeMap};
+use std::{
+    collections::btree_map::{self, BTreeMap},
+    iter::FusedIterator,
+};
 
+#[derive(Clone, Debug)]
 pub struct DepthFirstIter<'a, K: Ord + 'a, V: 'a> {
     stack: Vec<btree_map::Iter<'a, K, Tree<K, V>>>,
     current: Option<(&'a K, &'a Tree<K, V>)>,
@@ -86,6 +90,9 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIter<'a, K, V> {
     }
 }
 
+impl<K: Ord, V> FusedIterator for DepthFirstIter<'_, K, V> {}
+
+#[derive(Debug)]
 pub struct DepthFirstIterMut<'a, K: Ord + 'a, V: 'a> {
     stack: Vec<btree_map::IterMut<'a, K, Tree<K, V>>>,
     current: Option<(&'a K, &'a mut V)>,
@@ -195,6 +202,8 @@ impl<'a, K: Ord + 'a, V: 'a> DepthFirstIterMut<'a, K, V> {
         };
     }
 }
+
+impl<K: Ord, V> FusedIterator for DepthFirstIterMut<'_, K, V> {}
 
 #[cfg(test)]
 use duplicate::duplicate;

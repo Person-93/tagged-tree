@@ -7,10 +7,10 @@ use std::{
     collections::btree_map::{
         self, BTreeMap, IntoKeys, IntoValues, Keys, Values, ValuesMut,
     },
+    ops::Index,
 };
 
-// TODO standard trait implementations
-
+#[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Tree<K: Ord, V> {
     value: V,
     children: BTreeMap<K, Tree<K, V>>,
@@ -183,6 +183,20 @@ impl<K: Ord, V> Tree<K, V> {
     }
 }
 
+impl<K, Q, V> Index<&'_ Q> for Tree<K, V>
+where
+    K: Borrow<Q> + Ord,
+    Q: Ord + ?Sized,
+{
+    type Output = Self;
+
+    #[inline]
+    fn index(&self, index: &'_ Q) -> &Self::Output {
+        self.children.index(index)
+    }
+}
+
+#[derive(Debug)]
 pub enum Entry<'a, K: Ord, V> {
     Occupied(OccupiedEntry<'a, K, V>),
     Vacant(VacantEntry<'a, K, V>),
@@ -245,6 +259,7 @@ impl<'a, K: Ord, V> Entry<'a, K, V> {
     }
 }
 
+#[derive(Debug)]
 pub struct OccupiedEntry<'a, K: Ord, V>(
     btree_map::OccupiedEntry<'a, K, Tree<K, V>>,
 );
@@ -286,6 +301,7 @@ impl<'a, K: Ord, V> OccupiedEntry<'a, K, V> {
     }
 }
 
+#[derive(Debug)]
 pub struct VacantEntry<'a, K: 'a + Ord, V: 'a>(
     btree_map::VacantEntry<'a, K, Tree<K, V>>,
 );
