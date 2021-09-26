@@ -242,6 +242,14 @@ impl<'a, K: Ord, V> Entry<'a, K, V> {
     }
 
     #[inline]
+    pub fn or_insert_tree(self, default: Tree<K, V>) -> &'a mut Tree<K, V> {
+        match self {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => entry.insert_tree(default),
+        }
+    }
+
+    #[inline]
     pub fn or_insert_with<F: FnOnce() -> V>(
         self,
         default: F,
@@ -328,6 +336,11 @@ impl<'a, K: Ord, V> OccupiedEntry<'a, K, V> {
     }
 
     #[inline]
+    pub fn insert_tree(&mut self, tree: Tree<K, V>) -> Tree<K, V> {
+        self.0.insert(tree)
+    }
+
+    #[inline]
     pub fn remove(self) -> Tree<K, V> {
         self.0.remove()
     }
@@ -352,6 +365,11 @@ impl<'a, K: 'a + Ord, V: 'a> VacantEntry<'a, K, V> {
     #[inline]
     pub fn insert(self, value: V) -> &'a mut Tree<K, V> {
         self.0.insert(Tree::new(value))
+    }
+
+    #[inline]
+    pub fn insert_tree(self, tree: Tree<K, V>) -> &'a mut Tree<K, V> {
+        self.0.insert(tree)
     }
 }
 
