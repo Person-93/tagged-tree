@@ -213,6 +213,15 @@ where
     }
 }
 
+impl<K: Ord, V> IntoIterator for Tree<K, V> {
+    type Item = (K, Tree<K, V>);
+    type IntoIter = btree_map::IntoIter<K, Tree<K, V>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.children.into_iter()
+    }
+}
+
 #[derive(Debug)]
 pub enum Entry<'a, K: Ord, V> {
     Occupied(OccupiedEntry<'a, K, V>),
