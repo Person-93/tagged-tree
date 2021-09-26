@@ -31,6 +31,10 @@ impl<K: Ord, V> Tree<K, V> {
     }
 
     #[inline]
+    pub fn value_mut(&mut self) -> &mut V {
+        &mut self.value
+    }
+    #[inline]
     pub fn set_value(&mut self, mut value: V) -> V {
         std::mem::swap(&mut self.value, &mut value);
         value
