@@ -2,6 +2,8 @@ mod iterators;
 
 pub use iterators::*;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,
     collections::btree_map::{
@@ -11,6 +13,7 @@ use std::{
 };
 
 #[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Tree<K: Ord, V> {
     value: V,
     children: BTreeMap<K, Tree<K, V>>,
