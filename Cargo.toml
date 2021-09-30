@@ -5,6 +5,8 @@ version = "0.3.1-dev"
 edition = "2018"
 description = "A tree-like data structure where the values are tagged."
 license = "MIT"
+repository = "https://github.com/Person-93/tagged-tree"
+documentation = "https://docs.rs/tagged-tree/"
 
 [dependencies.serde]
 version = "1.0.130"
